@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 int main(int argc, char* argv[])
 {
-    if(argc != 3){
+    if(argc < 2){
         fprintf(stderr, "Argument is failed.\n");
         exit(1);
     }
@@ -17,7 +18,13 @@ int main(int argc, char* argv[])
     }
     else if(pid == 0)
     { // 子プロセス
-        execlp(argv[1], argv[1], argv[2], NULL);
+        char** cmd = calloc(argc, sizeof(char*));
+        for(int i=0; i<argc-1; i++){
+            cmd[i] = (char*)calloc(1, 128);
+            strcpy(cmd[i], argv[i+1]);
+        }
+        cmd[argc-1] = '\0';
+        execvp(cmd[0], cmd);
         fprintf(stderr, "Error exec\n");
         return EXIT_FAILURE;
     }

@@ -87,3 +87,61 @@ drwxrwxr-x 3 tkcd tkcd  4096  9月  3 21:42 doc
 -rw-rw-r-- 1 tkcd tkcd   691  9月  4 06:52 main.c
 pid=54408 is completed
 ```
+
+ただし`execlp(argv[0], argv[1], argv[2], NULL)`と指定してしまっているため、引数がついていないコマンドは失敗します。
+```sh
+$ ./a.out ls
+Argument is failed
+```
+
+## execlpでなくexecvpを使う
+execvpのほうが指定が柔軟なので、差し替えてみましょう。
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+int main(int argc, char* argv[])
+{
+    if(argc < 2){
+        fprintf(stderr, "Argument is failed.\n");
+        exit(1);
+    }
+    pid_t pid = fork();
+    if(pid < 0)
+    {
+        fprintf(stderr, "Error fork\n");
+        return EXIT_FAILURE;
+    }
+    else if(pid == 0)
+    { // 子プロセス
+        char** cmd = calloc(argc, sizeof(char*));
+        for(int i=0; i<argc-1; i++){
+            cmd[i] = (char*)calloc(1, 128);
+            strcpy(cmd[i], argv[i+1]);
+        }
+        cmd[argc-1] = '\0';
+        execvp(cmd[0], cmd);
+        fprintf(stderr, "Error exec\n");
+        return EXIT_FAILURE;
+    }
+    else
+    { // 親プロセス
+        int status;
+        waitpid(pid, &status, 0);
+        fprintf(stdout, "pid=%d is completed\n", pid);
+    }
+    return 0;
+}
+```
+
+引数の長さに応じて動的に確保するので、`ls`のみでも実行できます。
+```sh
+$ gcc ./main.c
+$ ./a.out ls
+LICENSE  README.md  a.out  doc  main.c
+pid=55559 is completed
+```
