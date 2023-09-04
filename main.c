@@ -6,7 +6,7 @@
 int main(int argc, char* argv[])
 {
     if(argc != 3){
-        fprintf(stderr, "Argment is too short.\n");
+        fprintf(stderr, "Argument is failed.\n");
         exit(1);
     }
     pid_t pid = fork();

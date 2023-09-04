@@ -41,10 +41,49 @@ Linuxではプロセスを実行する手法として次の手順が一般的で
 
 
 ```c
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <sys/type.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 int main(int argc, char* argv[])
 {
-
+    if(argc != 3){
+        fprintf(stderr, "Argument is failed.\n");
+        exit(1);
+    }
+    pid_t pid = fork();
+    if(pid < 0)
+    {
+        fprintf(stderr, "Error fork\n");
+        return EXIT_FAILURE;
+    }
+    else if(pid == 0)
+    { // 子プロセス
+        execlp(argv[1], argv[1], argv[2], NULL);
+        fprintf(stderr, "Error exec\n");
+        return EXIT_FAILURE;
+    }
+    else
+    { // 親プロセス
+        int status;
+        waitpid(pid, &status, 0);
+        fprintf(stdout, "pid=%d is completed\n", pid);
+    }
+    return 0;
 }
+```
+
+上記のコードを`main.c`に保存してコンパイルします。
+試しに引数に`ls -l`を指定して実行してみます。
+```sh
+$ gcc ./main.c
+$ ./a.out ls -l
+合計 32
+-rw-rw-r-- 1 tkcd tkcd  1061  9月  3 15:42 LICENSE
+-rw-rw-r-- 1 tkcd tkcd  3174  9月  4 00:04 README.md
+-rwxrwxr-x 1 tkcd tkcd 16312  9月  4 06:52 a.out
+drwxrwxr-x 3 tkcd tkcd  4096  9月  3 21:42 doc
+-rw-rw-r-- 1 tkcd tkcd   691  9月  4 06:52 main.c
+pid=54408 is completed
 ```
