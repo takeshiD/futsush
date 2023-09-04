@@ -123,7 +123,8 @@ int main(int argc, char* argv[])
             cmd[i] = (char*)calloc(1, 128);
             strcpy(cmd[i], argv[i+1]);
         }
-        cmd[argc-1] = '\0';
+        // cmd[argc-1] = '\0';
+        cmd[argc-1] = 0;
         execvp(cmd[0], cmd);
         fprintf(stderr, "Error exec\n");
         return EXIT_FAILURE;
@@ -141,7 +142,8 @@ int main(int argc, char* argv[])
 `calloc(size_t n, size_t size)`はsize[byte]の領域をn個確保し、0で初期化する関数です。ちなみに`malloc`は初期化をしません。  
 `cmd[argc-1] = '\0';`で`cmd`配列の終端にNULL文字(='\0')を代入しています。`execvp`はNULLがある時点で終端と判定する関数のためこのような操作を行っています。
 
-> callocで0に初期化してるので、代入する必要は無いのですが説明のため入れてます。
+> ASCIIコード表で0該当する文字がNULL文字とされており、char型の表現で`\0`となります。gccでは`cmd[artgc-1] = 0;`としても同じです。
+> 実はcallocで0に初期化してるので代入する必要は無いのですが説明のため入れてます。あと分かりやすいです。
 
 引数の長さに応じて動的に確保するので、`ls`のみでも実行できます。
 ```sh
