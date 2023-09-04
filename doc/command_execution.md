@@ -167,7 +167,7 @@ pid=55559 is completed
 $ ./a.out ls
 
 ```
-別の端末を立ち上げて`ps f`を実行してみると以下のように <defunct>と表示されるプロセスが見えます。これがゾンビプロセスです。
+別の端末を立ち上げて`ps f`を実行してみると以下のよう`<defunct>`と表示されるプロセスが見えます。これがゾンビプロセスです。
 ```sh
   57390 pts/1    R+     0:03  \_ ./a.out ls                        │fish-shell-1.21.6.zip           readline-2.0.tar.gz
   57391 pts/1    Z+     0:00      \_ [ls] <defunct> 
