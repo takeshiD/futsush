@@ -140,6 +140,7 @@ int main(int argc, char* argv[])
 ```
 
 `calloc(size_t n, size_t size)`はsize[byte]の領域をn個確保し、0で初期化する関数です。ちなみに`malloc`は初期化をしません。  
+
 `cmd[argc-1] = '\0';`で`cmd`配列の終端にNULL文字(='\0')を代入しています。`execvp`はNULLが出てきたら終端と判定する関数のためこのような操作を行っています。
 
 > ASCIIコード表でNULL文字が定義されており、数字で0に割り当てられています。数字では0ですがchar型の表現で`\0`です。gccでは`cmd[artgc-1] = 0;`としても同じです。  
@@ -152,3 +153,24 @@ $ ./a.out ls
 LICENSE  README.md  a.out  doc  main.c
 pid=55559 is completed
 ```
+
+## Appendix ゾンビ
+先程のコードを少し修正してゾンビプロセスを体験してみましょう。
+
+```diff
+- 34行 waitpid(pid, &status, 0);
++ 34行 // waitpid(pid, &status, 0);
++ 37行 while(1){}
+```
+上記のように修正してコンパイルして実行します。無限ループなので止まりません。
+```sh
+$ ./a.out ls
+
+```
+別の端末を立ち上げて`ps f`を実行してみると以下のように <defunct>と表示されるプロセスが見えます。これがゾンビプロセスです。
+```sh
+  57390 pts/1    R+     0:03  \_ ./a.out ls                        │fish-shell-1.21.6.zip           readline-2.0.tar.gz
+  57391 pts/1    Z+     0:00      \_ [ls] <defunct> 
+```
+ゾンビプロセスとはいえ、親プロセスのa.outに結びついているのでa.outが終了すれば終了します。
+元の端末に戻ってCtrl-Cで終了しましょう。

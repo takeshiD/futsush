@@ -31,8 +31,9 @@ int main(int argc, char* argv[])
     else
     { // 親プロセス
         int status;
-        waitpid(pid, &status, 0);
+        // waitpid(1000, &status, 0);
         fprintf(stdout, "pid=%d is completed\n", pid);
     }
+    while(1){}
     return 0;
 }
