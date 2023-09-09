@@ -189,13 +189,183 @@ $ ./a.out ls
 
 とりあえずそれっぽい形になるように
 1. ループ開始
-2. プロンプト表示
-3. コマンド受付
-4. コマンド実行
-5. 1に戻る
+2. プロンプト表示("$ "だけ)
+3. コマンド受付(char[])
+4. コマンド解析(char[] → char*[])
+5. コマンド実行
+6. 1に戻る
 という形で実装してみましょう。
 
-1.は`while`で実装、4.はここまでの内容を転用すればよさそうです。
-プロンプト表示とコマンド受付を考えてみましょう。
+1と6は`while`、5.はここまでの内容を転用できるでしょう。
+2.プロンプト表示、3.コマンド受付、4.コマンド解析を考えてみます。
 
 
+## プロンプト表示とコマンド受付
+2.プロンプト表示は`printf`、3.コマンド受付は`gets`でよさそうです。
+`gets`で受け取る文字列はとりあえず余裕を見て1024文字まで受け取れるようにしておきます。
+最後に受け取った文字列を表示するだけしておきます。
+```c
+char cmd[1024];
+while(1)
+{
+    printf("$ ");
+    gets(cmd);
+    printf("%s\n", cmd);
+}
+```
+実行すると以下のようになります。Ctrl-Cで終了できます。
+```sh
+$ ls
+ls
+$ aaaa
+aaaa
+$ sasas
+sasas
+$ ^C
+```
+
+> `gets`は非推奨の関数ですのでコンパイル時に`fgets`を使用するよう促すメッセージが出るかもしれません。
+> 今は説明を簡単にするため`gets`を使用します。
+
+## コマンド解析
+`gets`で受け取った文字列をコマンドと引数に分けて`execvp`に渡せる形に整形しましょう。
+問題を簡単にするために約束事を決めておきます。
+1. コマンドと引数は半角スペース1つで区切られる
+2. 先頭と終端はスペースが入らない
+次のような形だけ受け付けるようにします。
+```sh
+$ ls -la    # OK
+$  ls  -la  # NG
+```
+
+では以下に実装例を記載します。
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+int main()
+{
+    char cmd[1024];
+    while(1)
+    {
+        printf("$ ");
+        gets(cmd);
+        char* p = cmd;
+        char* argv[5];
+        int argc = 0;
+        while(*p) // NULLチェック
+        {
+            if(*p && 0x21 <= *p && *p <= 0x7e) // 0x21<= <=0x7e: 印字可能文字
+            {
+                char* head;
+                char* end;
+                head = p; // 印字可能文字の先頭アドレスを覚える
+                end  = p;
+                p++;
+                while(*p && 0x20 <= *p && *p <= 0x7e)
+                {
+                    if(0x21 <= *p && *p <= 0x7e)
+                    {
+                        end = p;
+                        p++;
+                        continue;
+                    }
+                    if(0x20 == *p)
+                    {
+                        p++;
+                        break;
+                    }
+                }
+                argv[argc] = calloc(1, end-head+1);
+                strncpy(argv[argc], head, end-head+1);
+                argc++;
+            }
+        }
+        argv[argc] = '\0';
+        for(int i=0; i<argc; i++)
+        {
+            printf("%s\n", argv[i]);
+        }
+        for(int i=0; i<argc; i++){
+            free(argv[i]);
+        }
+    }
+    return 0;
+}
+```
+
+急にややこしくなりましたが内容を説明していきます。
+
+
+
+```c
+char* p = cmd;
+char* argv[5];
+int argc = 0;
+while(*p)
+{
+```
+![](/doc/img/parsing_1.svg)
+`char* p`はポインタで、`cmd`の先頭アドレスを指すように指定しています。
+execvpへ渡す二次元配列としてargvを、引数の個数を表すためにargcを用意しました。
+`cmd`を指すポインタ`p`の指す値`*p`をNULL(=0)チェックしNULLで無ければwhileループに入ります。
+
+
+
+```c
+if(*p && 0x21 <= *p && *p <= 0x7e) // 0x21<= <=0x7e: 印字可能文字
+{
+    char* head; // argvへ格納する文字列の開始アドレス
+    char* end;  // argvへ格納する文字列の終了アドレス
+    head = p;
+    end  = p;
+    p++;
+```
+if文でNULLチェックかつ印字可能文字であるかを確認します。印字可能文字はASCIIコード表で検索してみてください。
+cmdは一連の文字列ですので、部分的にargvへスペースで区切ってコピーしなければなりません。
+このためにcmdのコマンドを表す文字の開始と終了を指すアドレスをheadとendに保存します。
+
+
+
+
+```c
+    while(*p && 0x20 <= *p && *p <= 0x7e)
+    {
+        if(0x21 <= *p && *p <= 0x7e) # ①コマンド文字列ならループ継続
+        {
+            end = p;
+            p++;
+            continue;
+        }
+        if(0x20 == *p) # ②半角スペースでループ終了
+        {
+            p++;
+            break;
+        }
+    }
+    argv[argc] = calloc(1, end-head+1);
+    strncpy(argv[argc], head, end-head+1);
+    argc++;
+}
+```
+![](/doc/img/parsing_2.svg)
+①で連続した文字列であるか判定し、真の場合はendのアドレスを更新してpを次の文字列を指すように更新しcontinueします。
+②半角スペースがあったらループを終了します。
+ループを抜けたらargvの領域を確保し、strncpyでcmdの部分文字列をコピーします。
+
+
+
+
+説明は以上です。ではコンパイルして実行してみましょう。
+規定されていないところに半角スペースが入ると無限ループに入るので都度Ctrl-Cで終了してください。
+
+正しくコマンドを入力出来ている場合はargvに格納された文字列が表示されます。
+```sh
+$ ls -la aaaaa
+ls
+-la
+aaaaa
+```
