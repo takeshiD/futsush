@@ -43,9 +43,27 @@ int main()
             }
         }
         argv[argc] = '\0';
-        for(int i=0; i<argc; i++)
+        // for(int i=0; i<argc; i++)
+        // {
+        //     printf("%s\n", argv[i]);
+        // }
+        pid_t pid = fork();
+        if(pid < 0)
         {
-            printf("%s\n", argv[i]);
+            fprintf(stderr, "Error fork\n");
+            return EXIT_FAILURE;
+        }
+        else if(pid == 0)
+        { // 子プロセス
+            execvp(argv[0], argv);
+            fprintf(stderr, "Error exec\n");
+            return EXIT_FAILURE;
+        }
+        else
+        { // 親プロセス
+            int status;
+            waitpid(pid, &status, 0);
+            fprintf(stdout, "pid=%d is completed\n", pid);
         }
         for(int i=0; i<argc; i++){
             free(argv[i]);
