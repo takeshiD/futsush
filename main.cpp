@@ -4,13 +4,17 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <iostream>
+
 int main()
 {
     char cmd[1024];
     while(1)
     {
         printf("$ ");
-        gets(cmd);
+        fgets(cmd, 1024, stdin);
+        char* _c = strchr(cmd, '\n');
+        if(_c != NULL){ *_c = '\0';}
         char* p = cmd;
         char* argv[5];
         int argc = 0;
@@ -37,16 +41,16 @@ int main()
                         break;
                     }
                 }
-                argv[argc] = calloc(1, end-head+1);
+                argv[argc] = (char*)calloc(1, end-head+1);
                 strncpy(argv[argc], head, end-head+1);
                 argc++;
             }
         }
-        argv[argc] = '\0';
-        // for(int i=0; i<argc; i++)
-        // {
-        //     printf("%s\n", argv[i]);
-        // }
+        argv[argc] = 0;
+        for(int i=0; i<argc; i++)
+        {
+            printf("%s\n", argv[i]);
+        }
         pid_t pid = fork();
         if(pid < 0)
         {
@@ -68,6 +72,7 @@ int main()
         for(int i=0; i<argc; i++){
             free(argv[i]);
         }
+        memset(cmd, 0, 1024);
     }
     return 0;
 }
