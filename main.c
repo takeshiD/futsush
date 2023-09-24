@@ -161,19 +161,9 @@ Command* make_command(int argc, char** argv, CommandKind kind)
 
 int main(int argc, char* argv[])
 {
-<<<<<<< HEAD
     if(argc != 2){
         fprintf(stderr, "Argument is short.\n");
         exit(EXIT_FAILURE);
-=======
-    char* cmd[];
-    while(1){
-        
-    }
-    if(argc < 2){
-        fprintf(stderr, "Argument is failed.\n");
-        exit(1);
->>>>>>> b77d6d4 (l)
     }
     TokenList* lst = tokenize(argv[1]);
     print_tokenlist(lst);
