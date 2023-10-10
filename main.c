@@ -158,6 +158,10 @@ Command* make_command(int argc, char** argv, CommandKind kind)
     return cmd;
 }
 
+CommandList* parse(TokenList* tknlst)
+{
+    
+}
 
 int main(int argc, char* argv[])
 {
@@ -167,6 +171,7 @@ int main(int argc, char* argv[])
     }
     TokenList* lst = tokenize(argv[1]);
     print_tokenlist(lst);
+    CommandList* cmdlst = pa
     // char cmd[1024];
     // while(1)
     // {
