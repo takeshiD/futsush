@@ -59,15 +59,8 @@ $ ls *.c                              # ワイルドカード: NG
     * [単一コマンドを実行するプログラム](/doc/command_execution.md#単一のコマンドを実行するプログラム)
     * [ループ実行への改造](/doc/command_execution.md#ループ実行への改造)
 3. [字句解析、構文解析](/doc/parsing.md)
-    * 字句解析
-    * 構文解析
-    * exec, fork, wait
-    * 1つのコマンドを実行するプログラム
-    * 実行をループする
-3. 字句解析、構文解析
-    * トークン
-    * 再帰下降解析
-    * 入力された文字列を解釈して実行するプログラム
+    * [字句解析](/doc/parsing.md#字句解析)
+    * [構文解析](/doc/parsing.md#構文解析)
 4. [分割コンパイル](/doc/separate_compile.md)
     * リンク
     * Makefile
